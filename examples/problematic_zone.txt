@@ -1,0 +1,26 @@
+$ORIGIN problematic.com.
+$TTL 60
+
+@       IN  SOA ns1.problematic.com. admin.problematic.com. (
+            2023080601  ; Serial
+            7200        ; Refresh
+            3600        ; Retry
+            604800      ; Expire
+            30          ; Minimum TTL - Too low for Azure DNS
+            )
+
+        IN  NS  ns1.problematic.com.
+
+        IN  A   192.168.1.1
+
+; This HINFO record type is not supported by Azure DNS
+computer IN  HINFO  "PC-Intel-700Mhz" "Linux 2.4"
+
+; This TXT record is too long for Azure DNS (over 1024 characters)
+long-txt IN  TXT "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam."
+
+; TTL too high
+high-ttl 2147483648 IN A 192.168.1.2
+
+; Very long label name (over 63 characters)
+this-is-a-very-long-subdomain-name-that-exceeds-the-azure-dns-label-limit-of-sixty-three-characters IN A 192.168.1.3

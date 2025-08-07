@@ -1,0 +1,43 @@
+$ORIGIN large-recordset.com.
+$TTL 3600
+
+@       IN  SOA ns1.large-recordset.com. admin.large-recordset.com. (
+            2023080601
+            7200
+            3600
+            604800
+            86400
+            )
+
+        IN  NS  ns1.large-recordset.com.
+
+; Too many A records (over 20)
+test    IN  A   192.168.1.1
+test    IN  A   192.168.1.2
+test    IN  A   192.168.1.3
+test    IN  A   192.168.1.4
+test    IN  A   192.168.1.5
+test    IN  A   192.168.1.6
+test    IN  A   192.168.1.7
+test    IN  A   192.168.1.8
+test    IN  A   192.168.1.9
+test    IN  A   192.168.1.10
+test    IN  A   192.168.1.11
+test    IN  A   192.168.1.12
+test    IN  A   192.168.1.13
+test    IN  A   192.168.1.14
+test    IN  A   192.168.1.15
+test    IN  A   192.168.1.16
+test    IN  A   192.168.1.17
+test    IN  A   192.168.1.18
+test    IN  A   192.168.1.19
+test    IN  A   192.168.1.20
+test    IN  A   192.168.1.21
+test    IN  A   192.168.1.22
+
+; Valid TXT record set (under 400 limit)
+txt-test IN  TXT "record1"
+txt-test IN  TXT "record2"
+txt-test IN  TXT "record3"
+txt-test IN  TXT "record4"
+txt-test IN  TXT "record5"

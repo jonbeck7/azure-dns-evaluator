@@ -1,0 +1,9 @@
+dnspython>=2.4.0
+colorama>=0.4.6
+click>=8.1.0
+
+# Optional dependencies for OctoDNS integration
+# Uncomment these lines if you want to use the OctoDNS validator
+# PyYAML>=6.0
+# octodns>=0.9.19
+# octodns-azure>=0.0.4

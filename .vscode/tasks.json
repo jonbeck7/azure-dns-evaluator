@@ -1,0 +1,133 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Azure DNS Evaluator - Help",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"--help"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test Valid Zone File",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"examples/valid_zone.txt"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test Problematic Zone File",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"examples/problematic_zone.txt"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test Large TXT Record Set",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"examples/large_txt_zone.txt"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test Large Record Set",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"examples/large_recordset_zone.txt"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test Large Zone Import Limits",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"azure_dns_evaluator.py",
+				"examples/large_zone_test.txt"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Run Test Suite",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"test_evaluator.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Test OctoDNS Example",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"octodns_validator.py",
+				"examples/octodns_example.yaml",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Convert OctoDNS to BIND",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"octodns_validator.py",
+				"examples/octodns_example.yaml",
+				"--convert-to-bind",
+				"examples/octodns_converted.txt"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		}
+	]
+}

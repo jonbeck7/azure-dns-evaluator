@@ -1,0 +1,58 @@
+# Example OctoDNS zone file for validation testing
+---
+'':
+  - type: SOA
+    value:
+      mname: ns1.example.com.
+      rname: admin.example.com.
+      serial: 2023080601
+      refresh: 7200
+      retry: 3600
+      expire: 604800
+      minimum: 86400
+    ttl: 86400
+  - type: NS
+    values:
+      - ns1.example.com.
+      - ns2.example.com.
+    ttl: 86400
+  - type: A
+    value: 192.168.1.1
+    ttl: 3600
+  - type: MX
+    value:
+      exchange: mail.example.com.
+      preference: 10
+    ttl: 3600
+  - type: TXT
+    value: "v=spf1 include:_spf.google.com ~all"
+    ttl: 3600
+
+www:
+  - type: A
+    value: 192.168.1.2
+    ttl: 3600
+
+mail:
+  - type: A
+    value: 192.168.1.3
+    ttl: 3600
+
+blog:
+  - type: CNAME
+    value: www.example.com.
+    ttl: 3600
+
+_dmarc:
+  - type: TXT
+    value: "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com"
+    ttl: 3600
+
+# Multiple A records example
+cdn:
+  - type: A
+    values:
+      - 203.0.113.10
+      - 203.0.113.11
+      - 203.0.113.12
+    ttl: 300
