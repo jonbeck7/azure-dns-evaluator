@@ -1,0 +1,17 @@
+{
+    "nameserver": "ns1-XX.azure-dns.com",
+    "timeout": 10,
+    "retry_count": 3,
+    "parallel": true,
+    "max_workers": 3,
+    "verbose": false,
+    "zones": {
+        "example": {
+            "nameserver": "ns1-example.azure-dns.com"
+        },
+        "test": {
+            "nameserver": "ns1-test.azure-dns.net",
+            "timeout": 15
+        }
+    }
+}

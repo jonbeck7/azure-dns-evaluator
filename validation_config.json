@@ -1,0 +1,6 @@
+{
+    "nameserver": "ns1-XX.azure-dns.com",
+    "timeout": 10,
+    "retry_count": 3,
+    "verbose": false
+}

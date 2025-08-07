@@ -128,6 +128,84 @@
 			"problemMatcher": [
 				"$python"
 			]
+		},
+		{
+			"label": "Zone Validation - Help",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"zone_validation.py",
+				"--help"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Validate Zone with Config",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"zone_validation.py",
+				"examples/valid_zone.txt",
+				"--config",
+				"validation_config.json",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Validate Zone Auto-Discover",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"zone_validation.py",
+				"examples/valid_zone.txt",
+				"--auto-discover",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Batch Validation - Help",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"batch_validation.py",
+				"--help"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Batch Validate Examples",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"batch_validation.py",
+				"examples",
+				"--config",
+				"batch_config.json",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			]
 		}
 	]
 }

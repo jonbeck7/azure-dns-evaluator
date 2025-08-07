@@ -509,6 +509,13 @@ class AzureDNSValidator:
         # Group records by name and type (record set)
         record_sets = {}
         for record in zone_info.records:
+            # Skip root NS records as Azure DNS will ignore them during import
+            if (record.record_type == 'NS' and 
+                (record.name == '@' or 
+                 record.name == zone_info.origin or 
+                 record.name == f"{zone_info.origin}.")):
+                continue
+                
             key = (record.name, record.record_type)
             if key not in record_sets:
                 record_sets[key] = []
@@ -548,9 +555,15 @@ class AzureDNSValidator:
                 f"smaller importable files."
             )
         
-        # Calculate unique record sets (name + type combinations)
+        # Calculate unique record sets (name + type combinations), excluding root NS records
         record_sets = set()
         for record in zone_info.records:
+            # Skip root NS records as Azure DNS will ignore them during import
+            if (record.record_type == 'NS' and 
+                (record.name == '@' or 
+                 record.name == zone_info.origin or 
+                 record.name == f"{zone_info.origin}.")):
+                continue
             record_sets.add((record.name, record.record_type))
         
         record_set_count = len(record_sets)
@@ -602,9 +615,15 @@ class ZoneSplitter:
         total_lines = self.zone_info.total_lines
         max_lines_per_file = AZURE_DNS_LIMITS['max_import_lines']
         
-        # Calculate unique record sets (name + type combinations)
+        # Calculate unique record sets (name + type combinations), excluding root NS records
         record_sets = set()
         for record in self.zone_info.records:
+            # Skip root NS records as Azure DNS will ignore them during import
+            if (record.record_type == 'NS' and 
+                (record.name == '@' or 
+                 record.name == self.zone_info.origin or 
+                 record.name == f"{self.zone_info.origin}.")):
+                continue
             record_sets.add((record.name, record.record_type))
         
         total_record_sets = len(record_sets)
@@ -759,12 +778,19 @@ class ReportGenerator:
         report_lines.append(f"  Total Records: {zone_info.total_records}")
         report_lines.append(f"  Total Lines: {zone_info.total_lines}")
         
-        # Calculate unique record sets
+        # Calculate unique record sets (excluding root NS records that Azure DNS ignores)
         record_sets = set()
         for record in zone_info.records:
+            # Skip root NS records as Azure DNS will ignore them during import
+            if (record.record_type == 'NS' and 
+                (record.name == '@' or 
+                 record.name == zone_info.origin or 
+                 record.name == f"{zone_info.origin}.")):
+                continue
             record_sets.add((record.name, record.record_type))
         record_set_count = len(record_sets)
         report_lines.append(f"  Total Record Sets: {record_set_count}")
+        report_lines.append(f"  (Note: Root NS records excluded as Azure DNS manages them automatically)")
         report_lines.append("")
         
         # Record type summary
@@ -900,8 +926,16 @@ Examples:
         needs_splitting = False
         error_count = len([r for r in validation_results if r.level == ValidationLevel.ERROR])
         
-        # Check if file exceeds import limits
-        record_sets = set((r.name, r.record_type) for r in zone_info.records)
+        # Check if file exceeds import limits (excluding root NS records)
+        record_sets = set()
+        for r in zone_info.records:
+            # Skip root NS records as Azure DNS will ignore them during import
+            if (r.record_type == 'NS' and 
+                (r.name == '@' or 
+                 r.name == zone_info.origin or 
+                 r.name == f"{zone_info.origin}.")):
+                continue
+            record_sets.add((r.name, r.record_type))
         if (zone_info.total_lines > AZURE_DNS_LIMITS['max_import_lines'] or 
             len(record_sets) > AZURE_DNS_LIMITS['max_import_record_sets']):
             needs_splitting = True

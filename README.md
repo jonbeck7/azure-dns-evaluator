@@ -6,6 +6,8 @@ A Python tool that evaluates BIND-compliant zone files for compatibility with Az
 
 - **Complete Zone File Parsing**: Parses BIND-format zone files with support for standard DNS record types
 - **Azure DNS Validation**: Validates against Azure DNS specific limitations and requirements
+- **Post-Import Validation**: Validates that records were successfully imported to Azure DNS authoritative servers
+- **Batch Validation**: Validates multiple zones in parallel for batch import verification
 - **Automatic Zone Splitting**: Splits large zone files into smaller importable chunks (handles 200k+ line files)
 - **Batch Import Tools**: Includes scripts for importing split zone files to Azure DNS in correct order
 - **OctoDNS Integration**: Native support for OctoDNS (DNS as Code) with YAML to BIND conversion and validation
@@ -13,6 +15,37 @@ A Python tool that evaluates BIND-compliant zone files for compatibility with Az
 - **Multiple Output Formats**: Supports both human-readable text and machine-readable JSON reports
 - **CLI Interface**: Easy-to-use command-line interface for automation and scripting
 - **VS Code Integration**: Includes tasks for easy testing and development
+
+## 🔍 Validation Tools
+
+This project includes three main validation tools:
+
+### 1. Pre-Import Validation (`azure_dns_evaluator.py`)
+
+Validates zone files for Azure DNS compatibility **before** importing:
+
+- Checks Azure DNS limitations and requirements
+- Identifies unsupported record types
+- Validates record format and content
+- Automatically splits large files for import
+
+### 2. Post-Import Validation (`zone_validation.py`)
+
+Validates that records were successfully imported by querying Azure DNS authoritative servers:
+
+- Queries Azure DNS nameservers directly
+- Compares expected vs actual records
+- Handles zones that aren't delegated yet
+- Configurable nameservers per zone
+
+### 3. Batch Validation (`batch_validation.py`)
+
+Validates multiple zones in batch for large migrations:
+
+- Parallel validation for faster processing
+- Zone-specific nameserver configuration
+- Comprehensive batch reporting
+- Perfect for validating entire migrations
 
 ## Supported DNS Record Types
 
@@ -108,6 +141,39 @@ python azure_dns_evaluator.py large_zone.txt --split --verbose
 
 # Split using even distribution method
 python azure_dns_evaluator.py large_zone.txt --split --split-method even
+```
+
+### Post-Import Validation
+
+Validate that records were successfully imported to Azure DNS:
+
+```bash
+# Validate using specific Azure DNS nameservers
+python zone_validation.py zone.txt --nameservers ns1-01.azure-dns.com ns2-01.azure-dns.net
+
+# Auto-discover nameservers from the zone's NS records
+python zone_validation.py zone.txt --auto-discover
+
+# Use a configuration file for settings
+python zone_validation.py zone.txt --config validation_config.json --verbose
+
+# Generate JSON validation report
+python zone_validation.py zone.txt --nameservers ns1-01.azure-dns.com --format json --output validation_report.json
+```
+
+### Batch Validation
+
+Validate multiple zones in batch:
+
+```bash
+# Validate all zone files in a directory
+python batch_validation.py /path/to/zones --config batch_config.json
+
+# Validate specific zone files with parallel processing
+python batch_validation.py zone1.txt zone2.txt zone3.txt --nameservers ns1-01.azure-dns.com --parallel
+
+# Generate comprehensive batch report
+python batch_validation.py /path/to/zones --config batch_config.json --format json --output batch_report.json
 ```
 
 ### Batch Import for Split Files
