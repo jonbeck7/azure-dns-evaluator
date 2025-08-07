@@ -17,7 +17,7 @@ Features:
 - Comprehensive logging and error handling
 - Filters administrative records (root SOA/NS) that differ during delegation
 
-Author: Jon Beck
+Author: CoPilot with prompts from Jon Beck
 Date: August 7, 2025
 """
 
@@ -41,12 +41,12 @@ from typing import List, Dict, Tuple, Optional
 # =============================================================================
 
 # Zone file configuration
-CHILD_ZONE_FILE = "test.arunkumardnssec.zone"                          # Path to your child zone file
-CHILD_ORIGIN = "test.arunkumardnssec.com"             # Origin of the child zone (trailing dot added automatically)
+CHILD_ZONE_FILE = "examples/contoso-subdomain.zone"                   # Path to your child zone file
+CHILD_ORIGIN = "subdomain.contoso.com"                                # Origin of the child zone (trailing dot added automatically)
 
 # Nameserver configuration - FQDN or IP addresses  
-CHILD_NS = "ns1-85.azure-dns.com"                      # Child nameserver (FQDN or IP) - using delegated nameserver
-PARENT_NS = "9.9.9.9"                     # Parent nameserver (FQDN or IP) - main zone nameserver
+CHILD_NS = "ns1-XX.azure-dns.com"                                     # Child nameserver (FQDN or IP) - using delegated nameserver
+PARENT_NS = "8.8.8.8"                                                 # Parent nameserver (FQDN or IP) - main zone nameserver
 
 # Validation options - Enhanced DNS Record Support
 # Now supports ALL DNS record types: A, AAAA, CNAME, TXT, MX, PTR, SRV, CAA, etc.

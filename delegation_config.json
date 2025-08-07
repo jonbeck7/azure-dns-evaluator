@@ -1,6 +1,6 @@
 {
-    "CHILD_ZONE_FILE": "examples/delegation_test.zone",
-    "CHILD_ORIGIN": "test.example.com",
+    "CHILD_ZONE_FILE": "examples/contoso-subdomain.zone",
+    "CHILD_ORIGIN": "subdomain.contoso.com",
     "CHILD_NS": "ns1-XX.azure-dns.com",
     "PARENT_NS": "8.8.8.8",
     "IGNORE_ADMINISTRATIVE_RECORDS": true,
