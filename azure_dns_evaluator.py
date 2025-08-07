@@ -27,6 +27,28 @@ AZURE_SUPPORTED_RECORD_TYPES = {
     'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT', 'CAA'
 }
 
+# DNSSEC-related record types that require DNSSEC to be enabled
+DNSSEC_RECORD_TYPES = {
+    'DS', 'DNSKEY', 'RRSIG', 'NSEC', 'NSEC3', 'NSEC3PARAM'
+}
+
+# Record types that may require DNSSEC for proper functionality
+DNSSEC_DEPENDENT_RECORD_TYPES = {
+    'DS': 'Delegation Signer records require DNSSEC to be enabled on the zone',
+    'DNSKEY': 'DNS Key records are part of DNSSEC infrastructure',
+    'RRSIG': 'Resource Record Signatures require DNSSEC to be enabled',
+    'NSEC': 'Next Secure records are part of DNSSEC infrastructure',
+    'NSEC3': 'Next Secure version 3 records are part of DNSSEC infrastructure',
+    'NSEC3PARAM': 'NSEC3 parameters require DNSSEC to be enabled'
+}
+
+# Record types that benefit from DNSSEC for security but can function without it
+DNSSEC_RECOMMENDED_RECORD_TYPES = {
+    'SSHFP': 'SSH fingerprint records are vulnerable to spoofing without DNSSEC validation',
+    'HTTPS': 'HTTPS records provide better security guarantees when protected by DNSSEC',
+    'SVCB': 'Service binding records provide better security guarantees when protected by DNSSEC'
+}
+
 # Azure DNS limitations
 AZURE_DNS_LIMITS = {
     'max_record_sets': 10000,
@@ -339,6 +361,7 @@ class AzureDNSValidator:
         self._validate_txt_record_sets(zone_info)
         self._validate_record_set_sizes(zone_info)
         self._validate_import_size_limits(zone_info)
+        self._validate_dnssec_requirements(zone_info)
         
         # Log validation summary
         errors = len([r for r in self.validation_results if r.level == ValidationLevel.ERROR])
@@ -595,6 +618,115 @@ class AzureDNSValidator:
                 f"Consider monitoring record set count for future imports."
             )
 
+    def _validate_dnssec_requirements(self, zone_info: ZoneInfo):
+        """Validate DNSSEC-related records and requirements"""
+        dnssec_records = []
+        ds_records = []
+        dnssec_recommended_records = []
+        
+        # Identify DNSSEC-related records and records that benefit from DNSSEC
+        for record in zone_info.records:
+            if record.record_type in DNSSEC_RECORD_TYPES:
+                dnssec_records.append(record)
+                if record.record_type == 'DS':
+                    ds_records.append(record)
+            elif record.record_type in DNSSEC_RECOMMENDED_RECORD_TYPES:
+                dnssec_recommended_records.append(record)
+        
+        # Check for DS records specifically
+        if ds_records:
+            self._add_result(
+                ValidationLevel.WARNING,
+                f"Found {len(ds_records)} DS (Delegation Signer) records in zone file. "
+                f"DS records indicate this zone uses DNSSEC. "
+                f"IMPORTANT: You must enable DNSSEC on the Azure DNS zone BEFORE importing, "
+                f"or these records will be rejected during import."
+            )
+            
+            # Provide specific guidance for DS records
+            self._add_result(
+                ValidationLevel.INFO,
+                "DNSSEC Setup Required: "
+                "1. Create the Azure DNS zone first "
+                "2. Enable DNSSEC on the Azure DNS zone "
+                "3. Import the zone file "
+                "4. Update parent zone with new DS records from Azure DNS"
+            )
+        
+        # Check for other DNSSEC infrastructure records
+        other_dnssec_records = [r for r in dnssec_records if r.record_type != 'DS']
+        if other_dnssec_records:
+            dnssec_types = set(r.record_type for r in other_dnssec_records)
+            dnssec_type_counts = {rt: len([r for r in other_dnssec_records if r.record_type == rt]) 
+                                for rt in dnssec_types}
+            
+            type_summary = ", ".join([f"{rt}: {count}" for rt, count in dnssec_type_counts.items()])
+            
+            self._add_result(
+                ValidationLevel.WARNING,
+                f"Found DNSSEC infrastructure records ({type_summary}). "
+                f"These records require DNSSEC to be enabled on the Azure DNS zone. "
+                f"Import may fail if DNSSEC is not properly configured."
+            )
+            
+            # Provide detailed explanations for each DNSSEC record type found
+            for record_type in dnssec_types:
+                if record_type in DNSSEC_DEPENDENT_RECORD_TYPES:
+                    self._add_result(
+                        ValidationLevel.INFO,
+                        f"{record_type} records: {DNSSEC_DEPENDENT_RECORD_TYPES[record_type]}"
+                    )
+        
+        # Check for records that benefit from DNSSEC but can function without it
+        if dnssec_recommended_records:
+            recommended_types = set(r.record_type for r in dnssec_recommended_records)
+            recommended_type_counts = {rt: len([r for r in dnssec_recommended_records if r.record_type == rt]) 
+                                    for rt in recommended_types}
+            
+            type_summary = ", ".join([f"{rt}: {count}" for rt, count in recommended_type_counts.items()])
+            
+            self._add_result(
+                ValidationLevel.INFO,
+                f"Found records that benefit from DNSSEC protection ({type_summary}). "
+                f"While these records will import successfully without DNSSEC, "
+                f"they provide better security guarantees when the zone is DNSSEC-signed."
+            )
+            
+            # Provide detailed explanations for each record type
+            for record_type in recommended_types:
+                if record_type in DNSSEC_RECOMMENDED_RECORD_TYPES:
+                    self._add_result(
+                        ValidationLevel.INFO,
+                        f"{record_type} records: {DNSSEC_RECOMMENDED_RECORD_TYPES[record_type]}"
+                    )
+        
+        # Overall DNSSEC assessment
+        if dnssec_records:
+            self._add_result(
+                ValidationLevel.WARNING,
+                f"Zone contains {len(dnssec_records)} DNSSEC infrastructure records. "
+                f"RECOMMENDATION: Ensure DNSSEC is enabled on the Azure DNS zone before import. "
+                f"Without DNSSEC enabled, these records will be rejected during import."
+            )
+            
+            self._add_result(
+                ValidationLevel.INFO,
+                "Azure DNS DNSSEC Support: "
+                "Azure DNS supports DNSSEC but it must be explicitly enabled. "
+                "Use Azure CLI: 'az network dns zone update --name <zone> --resource-group <rg> --enable-dnssec true'"
+            )
+        elif dnssec_recommended_records:
+            self._add_result(
+                ValidationLevel.INFO,
+                f"Zone contains {len(dnssec_recommended_records)} records that benefit from DNSSEC protection. "
+                f"Consider enabling DNSSEC for enhanced security, especially for SSHFP records."
+            )
+        else:
+            self._add_result(
+                ValidationLevel.INFO,
+                "No DNSSEC records detected. Zone appears to be a standard (non-DNSSEC) zone."
+            )
+
 
 class ZoneSplitter:
     """Handle zone file splitting for large files"""
@@ -752,13 +884,161 @@ class ZoneSplitter:
         self.logger.info(f"Starting zone file split using method: {method}")
         num_splits = self.calculate_optimal_splits()
         
-        if method == "subdomain":
-            result = self.split_by_subdomain(num_splits)
+        # Check for DNSSEC infrastructure records and handle them specially
+        dnssec_infrastructure_records = [r for r in self.zone_info.records if r.record_type in DNSSEC_RECORD_TYPES]
+        
+        if dnssec_infrastructure_records:
+            self.logger.warning(f"Found {len(dnssec_infrastructure_records)} DNSSEC infrastructure records that require special handling")
+            
+            if method == "subdomain":
+                result = self.split_by_subdomain_with_dnssec_separation(num_splits, dnssec_infrastructure_records)
+            else:
+                result = self.split_evenly_with_dnssec_separation(num_splits, dnssec_infrastructure_records)
         else:
-            result = self.split_evenly(num_splits)
+            if method == "subdomain":
+                result = self.split_by_subdomain(num_splits)
+            else:
+                result = self.split_evenly(num_splits)
         
         self.logger.info(f"Successfully split zone file into {len(result)} files")
         return result
+    
+    def split_by_subdomain_with_dnssec_separation(self, num_splits: int, dnssec_infrastructure_records: List) -> List[str]:
+        """Split zone file by subdomain with DNSSEC infrastructure records in separate file"""
+        # Remove DNSSEC infrastructure records from normal processing
+        normal_records = [r for r in self.zone_info.records if r.record_type not in DNSSEC_RECORD_TYPES]
+        
+        # Group normal records by subdomain level
+        subdomain_groups = {}
+        soa_record = None
+        ns_records = []
+        
+        for record in normal_records:
+            if record.record_type == 'SOA':
+                soa_record = record
+            elif record.record_type == 'NS' and record.name == '@':
+                ns_records.append(record)
+            else:
+                # Extract subdomain key for grouping
+                name_parts = record.name.replace('@', '').strip('.')
+                if name_parts:
+                    key = name_parts.split('.')[0] if '.' in name_parts else name_parts
+                else:
+                    key = '@'
+                
+                if key not in subdomain_groups:
+                    subdomain_groups[key] = []
+                subdomain_groups[key].append(record)
+        
+        # Sort groups by size and distribute
+        sorted_groups = sorted(subdomain_groups.items(), key=lambda x: len(x[1]), reverse=True)
+        files = [[] for _ in range(num_splits)]
+        file_sizes = [0] * num_splits
+        
+        for group_key, records in sorted_groups:
+            min_file_idx = min(range(num_splits), key=lambda i: file_sizes[i])
+            files[min_file_idx].extend(records)
+            file_sizes[min_file_idx] += len(records)
+        
+        # Write normal files
+        normal_files = self._write_split_files(files, soa_record, ns_records)
+        
+        # Write DNSSEC infrastructure records to separate file if they exist
+        if dnssec_infrastructure_records:
+            dnssec_file = self._write_dnssec_records_file(dnssec_infrastructure_records)
+            normal_files.append(dnssec_file)
+        
+        return normal_files
+    
+    def split_evenly_with_dnssec_separation(self, num_splits: int, dnssec_infrastructure_records: List) -> List[str]:
+        """Split zone file evenly with DNSSEC infrastructure records in separate file"""
+        # Remove DNSSEC infrastructure records from normal processing
+        normal_records = [r for r in self.zone_info.records 
+                         if r.record_type not in DNSSEC_RECORD_TYPES]
+        
+        non_essential_records = [r for r in normal_records 
+                               if r.record_type not in ['SOA', 'NS'] or r.name != '@']
+        
+        soa_record = next((r for r in normal_records if r.record_type == 'SOA'), None)
+        ns_records = [r for r in normal_records 
+                     if r.record_type == 'NS' and r.name == '@']
+        
+        records_per_file = len(non_essential_records) // num_splits
+        remainder = len(non_essential_records) % num_splits
+        
+        files = []
+        start_idx = 0
+        
+        for i in range(num_splits):
+            file_size = records_per_file + (1 if i < remainder else 0)
+            end_idx = start_idx + file_size
+            files.append(non_essential_records[start_idx:end_idx])
+            start_idx = end_idx
+        
+        # Write normal files
+        normal_files = self._write_split_files(files, soa_record, ns_records)
+        
+        # Write DNSSEC infrastructure records to separate file if they exist
+        if dnssec_infrastructure_records:
+            dnssec_file = self._write_dnssec_records_file(dnssec_infrastructure_records)
+            normal_files.append(dnssec_file)
+        
+        return normal_files
+    
+    def _write_dnssec_records_file(self, dnssec_infrastructure_records: List) -> str:
+        """Write DNSSEC infrastructure records to a separate file with warnings"""
+        filename = self.output_dir / f"{self.base_name}_dnssec_infrastructure_REQUIRES_DNSSEC_ENABLED.txt"
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            # Write warning header
+            f.write("; ========================================================================\n")
+            f.write("; WARNING: DNSSEC INFRASTRUCTURE RECORDS - REQUIRES SPECIAL HANDLING\n")
+            f.write("; ========================================================================\n")
+            f.write(";\n")
+            f.write("; This file contains DNSSEC infrastructure records that REQUIRE DNSSEC:\n")
+            f.write(";\n")
+            f.write("; NOTE: HTTPS, SVCB, and SSHFP records that benefit from DNSSEC but can\n")
+            f.write("; function without it are kept in the regular zone files.\n")
+            f.write(";\n")
+            
+            # Group by record type for better organization
+            dnssec_by_type = {}
+            for record in dnssec_infrastructure_records:
+                if record.record_type not in dnssec_by_type:
+                    dnssec_by_type[record.record_type] = []
+                dnssec_by_type[record.record_type].append(record)
+            
+            # Write explanations for each record type
+            for record_type, records in dnssec_by_type.items():
+                f.write(f"; {record_type} Records ({len(records)} found):\n")
+                if record_type in DNSSEC_DEPENDENT_RECORD_TYPES:
+                    f.write(f"; {DNSSEC_DEPENDENT_RECORD_TYPES[record_type]}\n")
+                f.write(";\n")
+            
+            f.write("; IMPORTANT SETUP INSTRUCTIONS:\n")
+            f.write("; 1. Create the Azure DNS zone FIRST (without importing any records)\n")
+            f.write("; 2. Enable DNSSEC on the Azure DNS zone:\n")
+            f.write(";    az network dns zone update --name <zone> --resource-group <rg> --enable-dnssec true\n")
+            f.write("; 3. Import the main zone files FIRST (without DNSSEC infrastructure records)\n")
+            f.write("; 4. Then import this DNSSEC infrastructure records file\n")
+            f.write("; 5. For DS records: Update the parent zone with Azure DNS-generated DS records\n")
+            f.write(";\n")
+            f.write("; NOTE: Importing these records without DNSSEC enabled will cause import failure\n")
+            f.write("; ========================================================================\n")
+            f.write("\n")
+            
+            # Write zone directives
+            f.write(f"$ORIGIN {self.zone_info.origin}\n")
+            f.write(f"$TTL {self.default_ttl}\n\n")
+            
+            # Write DNSSEC infrastructure records grouped by type
+            for record_type in sorted(dnssec_by_type.keys()):
+                f.write(f"; {record_type} Records\n")
+                for record in dnssec_by_type[record_type]:
+                    f.write(f"{record.name}\t{record.ttl}\t{record.record_class}\t{record.record_type}\t{record.rdata}\n")
+                f.write("\n")
+        
+        return str(filename)
 
 
 class ReportGenerator:
@@ -951,10 +1231,31 @@ Examples:
             split_performed = True
             
             user_output.info(f"\nZone file has been split into {len(split_files)} files:")
+            dnssec_file = None
+            regular_files = []
+            
             for split_file in split_files:
-                user_output.info(f"  - {split_file}")
+                if "REQUIRES_DNSSEC_ENABLED" in split_file:
+                    dnssec_file = split_file
+                    user_output.warning(f"  - {split_file} (DNSSEC infrastructure - requires DNSSEC enabled)")
+                else:
+                    regular_files.append(split_file)
+                    user_output.info(f"  - {split_file}")
+            
             user_output.info(f"\nFiles saved to: {splitter.output_dir}")
-            user_output.info("Each split file should now be within Azure DNS import limits.")
+            
+            if dnssec_file:
+                user_output.notice("\nDNSSEC INFRASTRUCTURE RECORDS DETECTED:")
+                user_output.warning("Your zone contains DNSSEC infrastructure records that REQUIRE DNSSEC!")
+                user_output.info("Import sequence:")
+                user_output.info("1. Create Azure DNS zone and enable DNSSEC FIRST")
+                user_output.info("2. Import regular zone files (includes HTTPS/SVCB/SSHFP if present)")
+                user_output.info("3. Import DNSSEC infrastructure file last")
+                user_output.info("4. Update parent zone with Azure DNS-generated DS records")
+                user_output.notice("Note: HTTPS, SVCB, and SSHFP records are kept in regular files")
+                user_output.notice("      as they can function without DNSSEC (though DNSSEC is recommended)")
+            else:
+                user_output.info("Each split file should now be within Azure DNS import limits.")
             
             # Validate split files to confirm they're within limits
             if args.verbose:
@@ -972,22 +1273,36 @@ Examples:
                         split_results = [r for r in split_results 
                                        if not ("SOA record" in r.message and r.level == ValidationLevel.ERROR)]
                     
-                    split_errors = len([r for r in split_results if r.level == ValidationLevel.ERROR])
-                    
-                    if split_errors > 0:
-                        user_output.warning(f"{Path(split_file).name}: {split_errors} errors")
-                        all_valid = False
+                    # For DNSSEC files, expect DNSSEC warnings but don't count as errors for splitting validation
+                    if "REQUIRES_DNSSEC_ENABLED" in split_file:
+                        # Filter out DNSSEC-related warnings for split validation (expected)
+                        split_results = [r for r in split_results 
+                                       if not ("DNSSEC" in r.message and r.level == ValidationLevel.WARNING)]
+                        user_output.warning(f"  DNSSEC: {Path(split_file).name}: Contains DNSSEC records (requires DNSSEC enabled)")
                     else:
-                        if i == 0:
-                            user_output.info(f"  OK: {Path(split_file).name}: Valid for import (main file with SOA)")
+                        split_errors = len([r for r in split_results if r.level == ValidationLevel.ERROR])
+                        
+                        if split_errors > 0:
+                            user_output.warning(f"{Path(split_file).name}: {split_errors} errors")
+                            all_valid = False
                         else:
-                            user_output.info(f"  OK: {Path(split_file).name}: Valid for import (additional records)")
+                            if i == 0:
+                                user_output.info(f"  OK: {Path(split_file).name}: Valid for import (main file with SOA)")
+                            else:
+                                user_output.info(f"  OK: {Path(split_file).name}: Valid for import (additional records)")
                 
                 if all_valid:
                     user_output.success("\nSUCCESS: All split files are valid for Azure DNS import!")
                     user_output.info("Import instructions:")
-                    user_output.info("1. Import the main file first (part_01.txt)")
-                    user_output.info("2. Then import each additional file to add records to the zone")
+                    if dnssec_file:
+                        user_output.info("1. Create zone and enable DNSSEC first")
+                        user_output.info("2. Import the main file (part_01.txt)")
+                        user_output.info("3. Import additional record files")
+                        user_output.info("4. Import DNSSEC records file last")
+                        user_output.info("5. Update parent zone with Azure DNS DS records")
+                    else:
+                        user_output.info("1. Import the main file first (part_01.txt)")
+                        user_output.info("2. Then import each additional file to add records to the zone")
                     logger.info("All split files validated successfully")
                 else:
                     user_output.warning("Some split files still have validation errors.")
