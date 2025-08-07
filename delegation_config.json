@@ -1,0 +1,13 @@
+{
+    "CHILD_ZONE_FILE": "examples/delegation_test.zone",
+    "CHILD_ORIGIN": "test.example.com",
+    "CHILD_NS": "ns1-XX.azure-dns.com",
+    "PARENT_NS": "8.8.8.8",
+    "IGNORE_ADMINISTRATIVE_RECORDS": true,
+    "LOG_LEVEL": "INFO",
+    "REPORT_FORMATS": ["html", "json"],
+    "DNS_TIMEOUT": 10,
+    "DNS_RETRIES": 3,
+    "MAX_CONCURRENT_QUERIES": 10,
+    "QUERY_DELAY": 0.1
+}

@@ -1,8 +1,14 @@
 # Azure DNS Zone Validation Guide
 
-This guide shows how to use the zone validation tools to verify that your DNS records were successfully imported to Azure DNS.
+This guide shows how to use the zone validation tools to verify your DNS setup and delegation.
 
-## Scenarios
+## Available Validation Tools
+
+1. **Post-Import Validation** (`zone_validation.py`) - Verify records imported to Azure DNS
+2. **Batch Validation** (`batch_validation.py`) - Validate multiple zones in parallel
+3. **DNS Delegation Validation** (`delegation_validator.py`) - Validate parent-child zone relationships
+
+## Post-Import Validation Scenarios
 
 ### Scenario 1: Single Zone Validation with Known Nameserver
 
@@ -151,3 +157,74 @@ Get-AzDnsZone -Name example.com -ResourceGroupName myResourceGroup | Select-Obje
    python batch_validation.py zones/ --config batch_config.json --format json --output validation_report.json
    ```
 6. **Generate reports** for audit trails and documentation
+
+## DNS Delegation Validation
+
+For validating parent-child zone relationships and delegation setup:
+
+### Interactive Mode (Recommended for First-Time Users)
+
+```bash
+python delegation_validator.py --interactive
+```
+
+This will prompt you for:
+- Child zone file path
+- Child zone origin (domain name)
+- Child nameserver (the authoritative server for the child zone)
+- Parent nameserver (the authoritative server for the parent zone)
+- Validation options
+
+### Configuration File Mode
+
+Create a `delegation_config.json`:
+
+```json
+{
+    "CHILD_ZONE_FILE": "examples/delegation_test.zone",
+    "CHILD_ORIGIN": "test.example.com",
+    "CHILD_NS": "ns1-01.azure-dns.com",
+    "PARENT_NS": "8.8.8.8",
+    "IGNORE_ADMINISTRATIVE_RECORDS": true,
+    "REPORT_FORMATS": ["html", "json"],
+    "DNS_TIMEOUT": 10,
+    "DNS_RETRIES": 3
+}
+```
+
+Then run:
+
+```bash
+python delegation_validator.py --config delegation_config.json
+```
+
+### Command Line Mode
+
+```bash
+python delegation_validator.py \
+  --zone-file examples/delegation_test.zone \
+  --origin test.example.com \
+  --child-ns ns1-01.azure-dns.com \
+  --parent-ns 8.8.8.8 \
+  --format html,json
+```
+
+### What Gets Validated
+
+1. **Child Zone File vs. Child Server**: Validates that the records in your zone file match what's actually served by the child nameserver
+2. **Child Zone vs. Parent Zone**: Validates that the parent zone has proper NS records pointing to the child zone's nameservers
+3. **Record Consistency**: Ensures all DNS record types are properly delegated and accessible
+
+### Report Formats
+
+- **Text**: Human-readable console output
+- **JSON**: Machine-readable for automation
+- **CSV**: Spreadsheet-compatible format
+- **HTML**: Rich formatted report with styling
+
+### Common Use Cases
+
+- **Pre-Delegation Validation**: Verify zone files before setting up delegation
+- **Post-Delegation Verification**: Confirm delegation is working correctly
+- **Migration Validation**: Ensure proper delegation during DNS provider migrations
+- **Audit and Compliance**: Generate reports for delegation verification

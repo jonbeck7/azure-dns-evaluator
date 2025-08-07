@@ -18,7 +18,7 @@ A Python tool that evaluates BIND-compliant zone files for compatibility with Az
 
 ## 🔍 Validation Tools
 
-This project includes three main validation tools:
+This project includes four main validation tools:
 
 ### 1. Pre-Import Validation (`azure_dns_evaluator.py`)
 
@@ -46,6 +46,17 @@ Validates multiple zones in batch for large migrations:
 - Zone-specific nameserver configuration
 - Comprehensive batch reporting
 - Perfect for validating entire migrations
+
+### 4. DNS Delegation Validator (`delegation_validator.py`)
+
+Validates parent-child zone delegation relationships:
+
+- Child zone file vs. child server validation
+- Child zone vs. parent zone delegation validation
+- Supports all DNS record types (A, AAAA, CNAME, TXT, MX, SRV, CAA, etc.)
+- Multiple report formats (text, JSON, CSV, HTML)
+- Interactive and configuration-based operation
+- Concurrent DNS queries for performance
 
 ## Supported DNS Record Types
 
@@ -174,6 +185,24 @@ python batch_validation.py zone1.txt zone2.txt zone3.txt --nameservers ns1-01.az
 
 # Generate comprehensive batch report
 python batch_validation.py /path/to/zones --config batch_config.json --format json --output batch_report.json
+```
+
+### DNS Delegation Validation
+
+Validate parent-child zone delegation relationships:
+
+```bash
+# Interactive configuration mode (recommended for first-time users)
+python delegation_validator.py --interactive
+
+# Use configuration file
+python delegation_validator.py --config delegation_config.json
+
+# Command-line configuration
+python delegation_validator.py --zone-file examples/delegation_test.zone --origin test.example.com --child-ns ns1.example.com --parent-ns 8.8.8.8
+
+# Generate multiple report formats
+python delegation_validator.py --config delegation_config.json --format html,json,csv
 ```
 
 ### Batch Import for Split Files
