@@ -1,0 +1,43 @@
+name: DNSSEC DS Cache Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ds-cache-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run DS Cache Check
+        run: |
+          python ds_cache_check.py dnssecallup.com --output-format text --output ds_cache_results.txt
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-cache-results
+          path: ds_cache_results.txt
+
+      # Optionally fail the workflow if any resolver still has DS cached
+      - name: Fail if DS present
+        run: |
+          if grep -q 'PRESENT' ds_cache_results.txt; then
+            echo "DS record still present in at least one resolver. Failing workflow."
+            exit 1
+          fi

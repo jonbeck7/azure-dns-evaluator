@@ -278,7 +278,7 @@ Validation Summary:
 Recommendations:
   [PASS] Zone file appears compatible with Azure DNS!
   [PASS] You can proceed with importing this zone file to Azure DNS.
-```
+  ```
 
 ### JSON Report
 
@@ -393,6 +393,74 @@ For teams using OctoDNS (DNS as Code), this tool includes a special integration 
 - Validates them against Azure DNS limitations
 - Integrates seamlessly with CI/CD pipelines
 - Supports both individual zone files and complete OctoDNS configurations
+
+## DS Record Cache Verification (`ds_cache_check.py`)
+
+A Python tool to check if DNSSEC DS records for a domain are still cached by major public DNS resolvers before disabling DNSSEC. This helps prevent DNS resolution failures due to lingering DS records.
+
+### Features
+- Checks DS record cache status across public and custom DNS resolvers
+- Supports output in text, CSV, JSON, and HTML formats
+- Color-coded HTML output for quick status review
+- Summary statistics and error reporting
+- Custom output directory support
+- Type hints and improved code quality for maintainability
+
+### Usage
+
+Basic check:
+```bash
+python ds_cache_check.py example.com
+```
+
+Specify output format and file:
+```bash
+python ds_cache_check.py example.com --output-format html --output ds_cache_results.html
+```
+
+Add custom resolvers:
+```bash
+python ds_cache_check.py example.com --resolver 8.8.8.8 --resolver 1.1.1.1
+```
+
+Save output to a custom directory:
+```bash
+python ds_cache_check.py example.com --output-format csv --output results.csv --output-dir ./reports
+```
+
+### CLI Options
+- `domain`: Domain to check (required)
+- `--output-format`: Output format (`text`, `csv`, `json`, `html`)
+- `--output`: Output file path
+- `--output-dir`: Custom output directory
+- `--resolver`: Additional resolver IP or FQDN (can be specified multiple times)
+
+### Output Example (Text)
+```
+Domain: example.com
+Timestamp: 2025-08-14 12:34:56 UTC
+PRESENT: 2
+NOT PRESENT: 10
+ERROR: 1
+
+| Resolver   | IP         | DS Record   | Details | TTL |
+|------------|------------|-------------|---------|-----|
+| Google     | 8.8.8.8    | PRESENT     | ...     | ... |
+| Cloudflare | 1.1.1.1    | NOT PRESENT | -       | -   |
+| Quad9      | 9.9.9.9    | ERROR       | ...     | -   |
+
+Errors:
+ERROR: Quad9 (9.9.9.9) - Timeout
+```
+
+### Output Example (HTML)
+- Color-coded table: Red for PRESENT, Green for NOT PRESENT
+- Summary statistics and error list
+
+### Code Quality
+- Type hints for all functions and key variables
+- Improved docstrings and formatting
+- Easy to maintain and extend
 
 ## Contributing
 

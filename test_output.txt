@@ -1,0 +1,21 @@
+Domain: dnssecallup.com
+Timestamp: 2025-08-14 23:25:33 UTC
+PRESENT: 13
+NOT PRESENT: 0
+ERROR: 0
+
+| Resolver      | IP             | DS Record   | Details                                                                     |   TTL |
+|---------------|----------------|-------------|-----------------------------------------------------------------------------|-------|
+| Google        | 8.8.8.8        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 18500 |
+| Google2       | 8.8.4.4        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 21600 |
+| Cloudflare    | 1.1.1.1        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 86400 |
+| Cloudflare2   | 1.0.0.1        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 86400 |
+| Quad9         | 9.9.9.9        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 40050 |
+| OpenDNS       | 208.67.222.222 | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 86296 |
+| OpenDNS2      | 208.67.220.220 | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 83596 |
+| Comodo        | 8.26.56.26     | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 82306 |
+| Level3        | 4.2.2.1        | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 83903 |
+| CleanBrowsing | 185.228.168.9  | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 82306 |
+| Verisign      | 64.6.64.6      | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 40348 |
+| Verisign2     | 64.6.65.6      | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 39307 |
+| AT&T          | 165.87.13.129  | PRESENT     | 55488 13 2 18e4995a9a6630b0e7c791b94cb0406f0d9aaff2b9f8e78c767f4ac60d637ff0 | 83300 |

@@ -249,6 +249,20 @@
 			"problemMatcher": [
 				"$python"
 			]
+		},
+		{
+			"label": "Test Output Enhancements (Text)",
+			"type": "process",
+			"command": "python",
+			"args": [
+				"ds_cache_check.py",
+				"dnssecallup.com",
+				"--output-format",
+				"text",
+				"--output",
+				"test_output.txt"
+			],
+			"group": "test"
 		}
 	]
 }
